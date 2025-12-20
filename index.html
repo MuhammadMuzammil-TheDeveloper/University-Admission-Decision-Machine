@@ -1,56 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>University Admission DFA Simulation</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-
+    <link rel="stylesheet" href="style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"
+      integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+  </head>
+  <body>
+    <!-- Navbar -->
     <header>
-        <h1>🏛️ University Admission Decision Machine (DFA Model)</h1>
-        <button id="reset-button">🔄 Reset Simulation</button>
+      <div class="head-content">
+        <i class="fa-brands fa-artstation"></i>
+        <h1 class="nav-logo">University Admission Decision Machine</h1>
+      </div>
+      <button type="button" id="reset-button">Reset Simulation</button>
     </header>
 
     <div class="container">
-        <div class="panel dfa-panel">
-            <h2>DFA Model Visualization</h2>
-            <div id="dfa-visualization">
-                
-                
-                <p>
-                    Current State: <span id="current-state-display" class="state-tag s0">S0</span>
-                </p>
-            </div>
-
-            <h2>Transition Log</h2>
-            <ul id="history-log">
-                </ul>
+      <div class="panel dfa-panel">
+        <h2>DFA Model Visualization</h2>
+        <div id="dfa-visualization">
+          <p>
+            Current State:
+            <span id="current-state-display" class="state-tag s0">S0</span>
+          </p>
+        </div>
+        <h2>Transition Log</h2>
+        <ul id="history-log"></ul>
+      </div>
+      <div class="panel student-info-panel" id="student-info-panel">
+        <div class="applicant-form">
+          <i class="fa-solid fa-user-graduate"></i>
+          <h3 class="form-heading">Applicant Information</h3>
         </div>
 
-        <div class="panel admission-panel">
-            <h2 id="stage-title">S0: Form Submitted (Initial State)</h2>
-            <p id="stage-instructions">Welcome. This simulation models the admission process as a Deterministic Finite Automaton (DFA). Proceed through the states by satisfying the evaluation criteria.</p>
-            
-            <form id="admission-form">
-                </form>
-            
-            <button id="transition-button" class="action-btn">Begin Admission Process</button>
+        <form id="student-info-form" class="student-info-form">
+          <div class="form-group">
+            <label>Student Name</label>
+            <input type="text" id="studentName" required />
+          </div>
 
-            <div id="result-dashboard" class="hidden">
-                </div>
+          <div class="form-group">
+            <label>Registration / CNIC</label>
+            <input type="text" id="regNo" required />
+          </div>
 
-            <div id="admin-panel">
-                <h3>⚙️ Simulation & Testing Panel (Admin View)</h3>
-                <p>Use the test suite to rapidly verify DFA transition logic and acceptance criteria.</p>
-                <button id="run-test-button" class="action-btn">Run Automated Test Cases</button>
-                <pre id="test-log">Awaiting test run...</pre>
-            </div>
-            
-        </div>
+          <div class="form-group">
+            <label>Program Applied</label>
+            <select id="program" required>
+              <option value="">Select Program</option>
+              <option>BS Computer Science</option>
+              <option>BS Software Engineering</option>
+              <option>BS Artificial Intelligence</option>
+            </select>
+          </div>
+
+          <button type="submit" class="action-btn">
+            Start Admission Process
+          </button>
+        </form>
+      </div>
+
+      <div class="panel admission-panel hidden" id="admission-panel">
+        <h2 id="stage-title">S0: Form Submitted (Initial State)</h2>
+        <p id="stage-instructions">
+          This system simulates the university admission workflow using a
+          Deterministic Finite Automaton (DFA). Each stage represents an
+          official admission step, and progression is permitted only when the
+          required conditions are successfully fulfilled.
+        </p>
+
+        <form id="admission-form"></form>
+
+        <button id="transition-button" class="action-btn">
+          Begin Admission Process
+        </button>
+
+        <div id="result-dashboard" class="hidden"></div>
+      </div>
+      <div id="result-dashboard" class="hidden"></div>
+      <button id="download-log-btn" class="hidden">📄 Download Result</button>
     </div>
 
     <script src="script.js"></script>
-</body>
+  </body>
 </html>
