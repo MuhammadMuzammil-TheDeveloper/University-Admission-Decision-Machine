@@ -276,6 +276,7 @@ function updateUI() {
     transitionButton.classList.add("hidden");
     admissionForm.classList.add("hidden");
     renderResultDashboard();
+    renderDFA();
   } else {
     transitionButton.classList.remove("hidden");
     admissionForm.classList.remove("hidden");
@@ -430,3 +431,67 @@ document.addEventListener("DOMContentLoaded", () => {
   resetButton.addEventListener("click", resetSimulation);
   updateUI();
 });
+// Render DFA only at the end of transaction
+function renderDFA() {
+  if (!history.length) return;
+
+  const svgWidth = 900;
+  const svgHeight = 350;
+
+  // Only include states actually visited
+  const usedStates = new Set();
+  history.forEach(step => {
+    usedStates.add(step.from);
+    usedStates.add(step.to);
+  });
+
+  const stateArray = Array.from(usedStates);
+  const spacing = svgWidth / (stateArray.length + 1);
+  const positions = {};
+  stateArray.forEach((state, i) => {
+    positions[state] = { x: spacing * (i + 1), y: svgHeight / 2 };
+  });
+
+  // Create nodes
+  let nodesSVG = '';
+  stateArray.forEach(state => {
+    let fillColor = "#e0e0e0";
+    if (state === "S5") fillColor = "#4CAF50"; // Accept
+    if (state === "S6") fillColor = "#f44336"; // Reject
+    nodesSVG += `
+      <circle cx="${positions[state].x}" cy="${positions[state].y}" r="30" fill="${fillColor}" stroke="#000" stroke-width="3"/>
+      <text x="${positions[state].x}" y="${positions[state].y+5}" font-size="14" font-weight="bold" text-anchor="middle">${state}</text>
+    `;
+  });
+
+  // Create arrows for only used transitions
+  let arrowsSVG = '';
+  history.forEach(step => {
+    const from = positions[step.from];
+    const to = positions[step.to];
+    const color = "#FF5722"; // highlight path
+    const width = 3;
+
+    arrowsSVG += `
+      <line x1="${from.x}" y1="${from.y}" x2="${to.x}" y2="${to.y}" 
+            stroke="${color}" stroke-width="${width}" marker-end="url(#arrowhead)" />
+      <text x="${(from.x + to.x)/2}" y="${from.y - 20}" font-size="12" fill="${color}" font-family="sans-serif">
+        ${step.outcome}
+      </text>
+    `;
+  });
+
+  const svgContent = `
+    <svg width="${svgWidth}" height="${svgHeight}">
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto">
+          <path d="M0,0 L0,10 L10,5 Z" fill="black" />
+        </marker>
+      </defs>
+      ${nodesSVG}
+      ${arrowsSVG}
+    </svg>
+  `;
+
+  resultDashboard.innerHTML += `<h3>DFA Path for this Student</h3>${svgContent}`;
+}
