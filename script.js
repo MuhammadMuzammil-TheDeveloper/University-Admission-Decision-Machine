@@ -167,10 +167,45 @@ function renderForm(state) {
       break;
 
     case "S3":
+      html = `
+    <p>Select activities (optional). Minimum recommended: <strong>${THRESHOLDS.ACTIVITIES_MIN}</strong>.</p>
+    <div class="activity-checkboxes">
+      <label>
+        <input type="checkbox" name="activity_sports" value="1"> Competitive Sports Participation
+      </label>
+      <label>
+        <input type="checkbox" name="activity_certificate" value="1"> Advanced Skill Certificate (e.g., Coding, Language)
+      </label>
+      <label>
+        <input type="checkbox" name="activity_volunteer" value="1"> Significant Volunteer/Community Service
+      </label>
+      <label>
+        <input type="checkbox" name="activity_leadership" value="1"> Leadership Role (Club President, Team Captain)
+      </label>
+    </div>
+    <input type="hidden" id="activityCount" name="activityCount" value="0">
+  `;
+
+      // Add listener to update hidden activityCount field
+      setTimeout(() => {
+        const formEl = document.getElementById("admission-form");
+        const updateCount = () => {
+          let count = 0;
+          formEl.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+            if (cb.checked) count++;
+          });
+          document.getElementById("activityCount").value = count;
+        };
+        formEl.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+          cb.addEventListener("change", updateCount);
+        });
+      }, 0);
+      break;
+
       const activityCount = inputs.activityCount;
 
       // Always go to S4, no rejection
-      nextState = "S4";
+      // nextState = "S4";
       outcome = `Activities Recorded (Count: ${activityCount})`;
 
       // Add bonus to scholarship only if user selected any activity
@@ -271,8 +306,8 @@ function renderResultDashboard() {
 
   if (isAccepted) {
     html += `<p>Congratulations! You successfully passed all required stages of the evaluation process. ${scholarshipTier > 0 && decisionText.includes("Scholarship")
-        ? `A ${scholarshipTier}% scholarship has been awarded based on performance.`
-        : "No scholarship was granted."
+      ? `A ${scholarshipTier}% scholarship has been awarded based on performance.`
+      : "No scholarship was granted."
       }</p>`;
   } else {
     const failureStep = history.find((step) => step.to === "S6");
@@ -428,4 +463,3 @@ document.addEventListener("DOMContentLoaded", () => {
   resetButton.addEventListener("click", resetSimulation);
   updateUI();
 });
-
