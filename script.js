@@ -167,28 +167,21 @@ function renderForm(state) {
       break;
 
     case "S3":
-      html = `<p>Select activities. Minimum recommended: <strong>${THRESHOLDS.ACTIVITIES_MIN}</strong>.</p>
-              <div class="activity-checkboxes">
-                  <label><input type="checkbox" name="activity_sports" value="1"> Competitive Sports Participation</label>
-                  <label><input type="checkbox" name="activity_certificate" value="1"> Advanced Skill Certificate (e.g., Coding, Language)</label>
-                  <label><input type="checkbox" name="activity_volunteer" value="1"> Significant Volunteer/Community Service</label>
-                  <label><input type="checkbox" name="activity_leadership" value="1"> Leadership Role (Club President, Team Captain)</label>
-              </div>
-              <input type="hidden" id="activityCount" name="activityCount" value="0">`;
+      const activityCount = inputs.activityCount;
 
-      setTimeout(() => {
-        const formEl = document.getElementById("admission-form");
-        const updateCount = () => {
-          let count = 0;
-          formEl.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
-            if (cb.checked) count++;
-          });
-          document.getElementById("activityCount").value = count;
-        };
-        formEl.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
-          cb.addEventListener("change", updateCount);
-        });
-      }, 0);
+      // Always go to S4, no rejection
+      nextState = "S4";
+      outcome = `Activities Recorded (Count: ${activityCount})`;
+
+      // Add bonus to scholarship only if user selected any activity
+      if (activityCount > 0 && scholarshipTier > 0) {
+        const bonus = activityCount * 5; // 5% per activity
+        scholarshipTier = Math.min(scholarshipTier + bonus, 30); // Cap at 30%
+        outcome += ` | Scholarship adjusted to ${scholarshipTier}%`;
+      }
+
+      score = 100; // mark as "passed" stage for logging
+      condition = ""; // remove condition text
       break;
 
     case "S4":
@@ -277,11 +270,10 @@ function renderResultDashboard() {
   `;
 
   if (isAccepted) {
-    html += `<p>Congratulations! You successfully passed all required stages of the evaluation process. ${
-      scholarshipTier > 0 && decisionText.includes("Scholarship")
+    html += `<p>Congratulations! You successfully passed all required stages of the evaluation process. ${scholarshipTier > 0 && decisionText.includes("Scholarship")
         ? `A ${scholarshipTier}% scholarship has been awarded based on performance.`
         : "No scholarship was granted."
-    }</p>`;
+      }</p>`;
   } else {
     const failureStep = history.find((step) => step.to === "S6");
     html += `<p>The application was rejected at <strong>${failureStep.from}: ${STATES[failureStep.from]}</strong>.</p>`;
@@ -436,3 +428,4 @@ document.addEventListener("DOMContentLoaded", () => {
   resetButton.addEventListener("click", resetSimulation);
   updateUI();
 });
+
