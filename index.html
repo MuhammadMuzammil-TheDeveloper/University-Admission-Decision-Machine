@@ -71,10 +71,9 @@
       <div class="panel admission-panel hidden" id="admission-panel">
         <h2 id="stage-title">S0: Form Submitted (Initial State)</h2>
         <p id="stage-instructions">
-          This system simulates the university admission workflow using a
-          Deterministic Finite Automaton (DFA). Each stage represents an
-          official admission step, and progression is permitted only when the
-          required conditions are successfully fulfilled.
+          This system simulates the university admission process by dividing it
+          into different stages. An application moves to the next stage only
+          when the required conditions are met.
         </p>
 
         <form id="admission-form"></form>
@@ -86,7 +85,6 @@
         <div id="result-dashboard" class="hidden"></div>
       </div>
       <div id="result-dashboard" class="hidden"></div>
-      <button id="download-log-btn" class="hidden">📄 Download Result</button>
     </div>
 
     <script src="script.js"></script>
