@@ -1,54 +1,27 @@
-const STATES = {
+
+const States = {
   S1: "Documentation Submission & Verification",
-  S2: "Academic Evaluation (Percentage Based)",
+  S2: "Academic Evaluation",
   S3: "Extracurricular Activities Check",
   S4: "Interview Evaluation (Percentage)",
-  S5: "Accepted / Accepted with Scholarship (Accept State)",
+  S5: "Accepted (Accept State)",
   S6: "Rejected (Reject State)",
 };
 
 let studentInfo = {};
-
-// Student info form submission
-document
-  .getElementById("student-info-form")
-  .addEventListener("submit", function (e) {
-    e.preventDefault();
-
-    studentInfo = {
-      name: document.getElementById("studentName").value,
-      regNo: document.getElementById("regNo").value,
-      program: document.getElementById("program").value,
-    };
-
-    document.getElementById("admission-panel").classList.remove("hidden");
-    document.getElementById("student-info-panel").classList.add("hidden");
-
-    currentState = "S1";
-    updateUI();
-  });
+let currentState = "S1";
+let history = [];
+let applicantData = {};
 
 const THRESHOLDS = {
   ACADEMIC_PASS: 60,
-  SCHOLARSHIP_TIER_3: 90,
-  SCHOLARSHIP_TIER_2: 80,
-  SCHOLARSHIP_TIER_1: 70,
-  ACTIVITIES_MIN: 2,
   INTERVIEW_PASS: 50,
   MAX_SECOND_YEAR: 1100,
   MAX_ADMISSION_TEST: 100,
   TOTAL_MAX_SCORE: 1200,
-  SCHOLARSHIP_FACTOR: 0.7,
 };
 
-let currentState = "S1";
-let history = [];
-let applicantData = {};
-let finalScorePercentage = 0;
-let scholarshipTier = 0;
-
-const stageTitle = document.getElementById("stage-title");
-const stageInstructions = document.getElementById("stage-instructions");
+const stateTitle = document.getElementById("stage-title");
 const admissionForm = document.getElementById("admission-form");
 const transitionButton = document.getElementById("transition-button");
 const historyLog = document.getElementById("history-log");
@@ -56,11 +29,11 @@ const currentStateDisplay = document.getElementById("current-state-display");
 const resultDashboard = document.getElementById("result-dashboard");
 const resetButton = document.getElementById("reset-button");
 
-// DFA Transition Logic
+// Transitional Log:
 function transition(current, inputs) {
-  let nextState = "S6";
+  let nextState = "S6"; // default reject
   let outcome = "Rejected";
-  let condition = "Transition Failed";
+  let condition = "";
   let score = 0;
 
   switch (current) {
@@ -68,73 +41,50 @@ function transition(current, inputs) {
       if (inputs.documentsVerified) {
         nextState = "S2";
         outcome = "Documents Verified";
-        condition = "All Mandatory Documents Validated";
+        condition = "Mandatory documents verified";
       } else {
-        condition = "Mandatory Document Failure";
+        condition = "Mandatory documents missing";
       }
       break;
 
     case "S2":
       const marks2ndYear = inputs.marks2ndYear;
       const marksAdmissionTest = inputs.marksAdmissionTest;
-      const totalMarks = marks2ndYear + marksAdmissionTest;
-      score = (totalMarks / THRESHOLDS.TOTAL_MAX_SCORE) * 100;
-      score = Math.round(score);
+
+      score = Math.round(
+        ((marks2ndYear + marksAdmissionTest) /
+          THRESHOLDS.TOTAL_MAX_SCORE) *
+          100
+      );
 
       if (score >= THRESHOLDS.ACADEMIC_PASS) {
         nextState = "S3";
-        outcome = `Academic Pass (Score: ${score}%)`;
-
-        if (score >= THRESHOLDS.SCHOLARSHIP_TIER_3) {
-          scholarshipTier = 30;
-        } else if (score >= THRESHOLDS.SCHOLARSHIP_TIER_2) {
-          scholarshipTier = 20;
-        } else if (score >= THRESHOLDS.SCHOLARSHIP_TIER_1) {
-          scholarshipTier = 10;
-        }
-
-        condition = `Combined Percentage ${score}% ≥ ${THRESHOLDS.ACADEMIC_PASS}%`;
+        outcome = `Academic Pass (${score}%)`;
+        condition = `Academic score ≥ ${THRESHOLDS.ACADEMIC_PASS}%`;
       } else {
-        condition = `Combined Percentage ${score}% < ${THRESHOLDS.ACADEMIC_PASS}%`;
+        condition = `Academic score < ${THRESHOLDS.ACADEMIC_PASS}%`;
       }
       break;
 
     case "S3":
-      const activityCount = inputs.activityCount;
-      nextState = "S4";
-      outcome = `Activities Recorded (Count: ${activityCount})`;
-
-      if (scholarshipTier > 0 && activityCount > 0) {
-        const bonus = activityCount * 5;
-        scholarshipTier = Math.min(scholarshipTier + bonus, 30);
-        outcome += ` | Scholarship adjusted to ${scholarshipTier}%`;
+      if (inputs.activityCount >= 1) {
+        nextState = "S4";
+        outcome = "Extracurricular Requirement Met";
+        condition = "At least 1 extracurricular activity";
+        score = 100;
+      } else {
+        condition = "No extracurricular activities";
       }
-
-      score = 100;
       break;
 
     case "S4":
       score = inputs.interviewPercentage;
-
       if (score >= THRESHOLDS.INTERVIEW_PASS) {
-        const academicPercentage =
-          history.find((h) => h.from === "S2")?.stageScore || 0;
-
-        if (scholarshipTier > 0) {
-          if (score >= 70 && academicPercentage >= THRESHOLDS.SCHOLARSHIP_TIER_1) {
-            nextState = "S5";
-            outcome = `Accepted with ${scholarshipTier}% Scholarship`;
-          } else {
-            nextState = "S5";
-            outcome = "Accepted Regular (Scholarship Revoked)";
-            scholarshipTier = 0;
-          }
-        } else {
-          nextState = "S5";
-          outcome = "Accepted Regular";
-        }
+        nextState = "S5";
+        outcome = "Accepted";
+        condition = `Interview score ≥ ${THRESHOLDS.INTERVIEW_PASS}%`;
       } else {
-        condition = `Interview Score ${score}% < ${THRESHOLDS.INTERVIEW_PASS}%`;
+        condition = `Interview score < ${THRESHOLDS.INTERVIEW_PASS}%`;
       }
       break;
   }
@@ -142,12 +92,14 @@ function transition(current, inputs) {
   return { nextState, outcome, condition, stageScore: score };
 }
 
-// Render forms for each state (unchanged)
+
+// Render Form for Each Stage: 
 function renderForm(state) {
   let html = "";
-
-  let buttonText = "Submit and Evaluate Stage";
-  if (state === "S4") buttonText = "Final Evaluation and Decision";
+  let buttonText =
+    state === "S4"
+      ? "Final Evaluation and Decision"
+      : "Submit and Evaluate Stage";
   transitionButton.textContent = buttonText;
 
   switch (state) {
@@ -159,34 +111,24 @@ function renderForm(state) {
       break;
 
     case "S2":
-      html = `<p>Formula: ((2nd Year Marks + Admission Score) / ${THRESHOLDS.TOTAL_MAX_SCORE}) * 100. Min Pass: ${THRESHOLDS.ACADEMIC_PASS}%. Scholarship Tiers: 70%, 80%, 90%.</p>
-              <label for="marks2ndYear">2nd Year Marks (Max ${THRESHOLDS.MAX_SECOND_YEAR}):</label>
-              <input type="number" id="marks2ndYear" name="marks2ndYear" min="0" max="${THRESHOLDS.MAX_SECOND_YEAR}" required value="750">
-              <label for="marksAdmissionTest">Admission Test Score (Max ${THRESHOLDS.MAX_ADMISSION_TEST}):</label>
-              <input type="number" id="marksAdmissionTest" name="marksAdmissionTest" min="0" max="${THRESHOLDS.MAX_ADMISSION_TEST}" required value="70">`;
+      html = `
+        <label for="marks2ndYear">2nd Year Marks (Max ${THRESHOLDS.MAX_SECOND_YEAR}):</label>
+        <input type="number" id="marks2ndYear" name="marks2ndYear" min="0" max="${THRESHOLDS.MAX_SECOND_YEAR}" required value="750">
+        <label for="marksAdmissionTest">Admission Test Score (Max ${THRESHOLDS.MAX_ADMISSION_TEST}):</label>
+        <input type="number" id="marksAdmissionTest" name="marksAdmissionTest" min="0" max="${THRESHOLDS.MAX_ADMISSION_TEST}" required value="70">
+      `;
       break;
 
     case "S3":
       html = `
-    <p>Select activities (optional). Minimum recommended: <strong>${THRESHOLDS.ACTIVITIES_MIN}</strong>.</p>
-    <div class="activity-checkboxes">
-      <label>
-        <input type="checkbox" name="activity_sports" value="1"> Competitive Sports Participation
-      </label>
-      <label>
-        <input type="checkbox" name="activity_certificate" value="1"> Advanced Skill Certificate (e.g., Coding, Language)
-      </label>
-      <label>
-        <input type="checkbox" name="activity_volunteer" value="1"> Significant Volunteer/Community Service
-      </label>
-      <label>
-        <input type="checkbox" name="activity_leadership" value="1"> Leadership Role (Club President, Team Captain)
-      </label>
-    </div>
-    <input type="hidden" id="activityCount" name="activityCount" value="0">
-  `;
+        <div class="activity-checkboxes">
+          <label><input type="checkbox" name="activity_sports" value="1"> Competitive Sports Participation</label>
+          <label><input type="checkbox" name="activity_certificate" value="1"> Advanced Skill Certificate</label>
+          <label><input type="checkbox" name="activity_volunteer" value="1"> Volunteer/Community Service</label>
+        </div>
+        <input type="hidden" id="activityCount" name="activityCount" value="0">
+      `;
 
-      // Add listener to update hidden activityCount field
       setTimeout(() => {
         const formEl = document.getElementById("admission-form");
         const updateCount = () => {
@@ -196,42 +138,26 @@ function renderForm(state) {
           });
           document.getElementById("activityCount").value = count;
         };
-        formEl.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
-          cb.addEventListener("change", updateCount);
-        });
+        formEl
+          .querySelectorAll('input[type="checkbox"]')
+          .forEach((cb) => cb.addEventListener("change", updateCount));
       }, 0);
       break;
 
-      const activityCount = inputs.activityCount;
-
-      // Always go to S4, no rejection
-      // nextState = "S4";
-      outcome = `Activities Recorded (Count: ${activityCount})`;
-
-      // Add bonus to scholarship only if user selected any activity
-      if (activityCount > 0 && scholarshipTier > 0) {
-        const bonus = activityCount * 5; // 5% per activity
-        scholarshipTier = Math.min(scholarshipTier + bonus, 30); // Cap at 30%
-        outcome += ` | Scholarship adjusted to ${scholarshipTier}%`;
-      }
-
-      score = 100; // mark as "passed" stage for logging
-      condition = ""; // remove condition text
-      break;
-
     case "S4":
-      html = `<p>Minimum required percentage for pass: <strong>${THRESHOLDS.INTERVIEW_PASS}%</strong>.</p>
-              <label for="interviewPercentage">Interview Evaluation Score (Percentage 0-100):</label>
-              <input type="number" id="interviewPercentage" name="interviewPercentage" min="0" max="100" required value="75">
-              <p class="note">Current Academic Tier: <strong>${scholarshipTier}% Scholarship Tentative</strong>.</p>
-              <p class="note">Final Scholarship will be confirmed if Interview score is also strong (e.g., > 70%).</p>`;
+      html = `
+        <label for="interviewPercentage">Interview Evaluation Score (0-100):</label>
+        <input type="number" id="interviewPercentage" name="interviewPercentage" min="0" max="100" required value="75">
+      `;
       break;
   }
+
   admissionForm.innerHTML = html;
 }
 
+// Update UI:
 function updateUI() {
-  stageTitle.textContent = `${currentState}: ${STATES[currentState]}`;
+  stateTitle.textContent = `${currentState}: ${States[currentState]}`;
   currentStateDisplay.textContent = currentState;
   currentStateDisplay.className = `state-tag s${currentState.slice(1)}`;
 
@@ -248,7 +174,7 @@ function updateUI() {
   }
 }
 
-// Updated Log Function: only state tags and outcome, no condition text
+// Log update:
 function updateLog(fromState, toState, outcome, condition, score) {
   if (fromState === "S0") return;
 
@@ -256,20 +182,17 @@ function updateLog(fromState, toState, outcome, condition, score) {
   listItem.classList.add(toState === "S6" ? "log-fail" : "log-pass");
 
   let scoreDisplay =
-    score > 0 && fromState !== "S3"
-      ? ` (Score: ${score}${fromState === "S4" || fromState === "S2" ? "%" : ""})`
-      : "";
+    score > 0 && fromState !== "S3" ? ` (Score: ${score}%)` : "";
 
   listItem.innerHTML = `
-        <span class="state-tag s${fromState.slice(1)}">${fromState}</span>
-        → 
-        <span class="state-tag s${toState.slice(1)}">${toState}</span>
-        <strong>${outcome}</strong>${scoreDisplay}
-    `;
+    <span class="state-tag s${fromState.slice(1)}">${fromState}</span> → 
+    <span class="state-tag s${toState.slice(1)}">${toState}</span>
+    <strong>${outcome}</strong>${scoreDisplay}
+  `;
   historyLog.prepend(listItem);
 }
 
-// Updated result dashboard: removed print report button
+// Result dashboard:
 function renderResultDashboard() {
   const lastTransition = history[history.length - 1];
   const isAccepted = lastTransition.to === "S5";
@@ -280,50 +203,42 @@ function renderResultDashboard() {
     ? "result-accepted"
     : "result-rejected";
 
-  const academicStep = history.find((h) => h.from === "S2");
-  const academicPercentage = academicStep ? academicStep.stageScore : "N/A";
-
   let studentInfoHTML = `
     <h2>🎓 Admission Decision Report</h2>
     <div class="student-info-card">
-      <p><strong>Student Name:</strong> ${studentInfo.name || "-"}</p>
-      <p><strong>Registration No:</strong> ${studentInfo.regNo || "-"}</p>
-      <p><strong>Program:</strong> ${studentInfo.program || "-"}</p>
+      <p><strong>Student Name:</strong> ${Info.name || "-"}</p>
+      <p><strong>Registration No:</strong> ${Info.regNum || "-"}</p>
+      <p><strong>Program:</strong> ${Info.program || "-"}</p>
     </div>
     <hr>
   `;
 
   let html = `
-  ${studentInfoHTML}
-  <h2>${isAccepted ? "FINAL DECISION: " + decisionText : "FINAL DECISION: Rejected"}</h2>
-  <div class="decision-card ${isAccepted ? 'decision-accepted' : 'decision-rejected'}">
-    <p class="outcome-text">
-      <strong>Decision:</strong> ${decisionText}
-    </p>
-  </div>
-  <h3>Evaluation Summary</h3>
+    ${studentInfoHTML}
+    <h2>FINAL DECISION: ${isAccepted ? decisionText : "Rejected"}</h2>
+    <div class="decision-card ${
+      isAccepted ? "decision-accepted" : "decision-rejected"
+    }">
+      <p class="outcome-text"><strong>Decision:</strong> ${decisionText}</p>
+    </div>
   `;
 
-  if (isAccepted) {
-    html += `<p>Congratulations! You successfully passed all required stages of the evaluation process. ${scholarshipTier > 0 && decisionText.includes("Scholarship")
-      ? `A ${scholarshipTier}% scholarship has been awarded based on performance.`
-      : "No scholarship was granted."
-      }</p>`;
-  } else {
+  if (!isAccepted) {
     const failureStep = history.find((step) => step.to === "S6");
-    html += `<p>The application was rejected at <strong>${failureStep.from}: ${STATES[failureStep.from]}</strong>.</p>`;
+    html += `<p>The application was rejected at <strong>${failureStep.from}: ${
+      States[failureStep.from]
+    }</strong>.</p>`;
   }
 
   resultDashboard.innerHTML = html;
 }
 
-// --- Event Handlers ---
+// Form handling:
 function handleSubmit(event) {
   event.preventDefault();
 
   const inputs = {};
   const formData = new FormData(admissionForm);
-
   let activityCount = 0;
 
   for (let [key, value] of formData.entries()) {
@@ -341,11 +256,10 @@ function handleSubmit(event) {
   inputs.activityCount = activityCount;
 
   const result = transition(currentState, inputs);
-
   const previousState = currentState;
   currentState = result.nextState;
-
   applicantData = { ...applicantData, ...inputs };
+
   history.push({
     from: previousState,
     to: currentState,
@@ -364,19 +278,19 @@ function handleSubmit(event) {
   updateUI();
 }
 
+// Reset process:
 function resetSimulation() {
   currentState = "S1";
   history = [];
   applicantData = {};
-  scholarshipTier = 0;
   historyLog.innerHTML = "";
   resultDashboard.classList.add("hidden");
   document.getElementById("admission-panel").classList.add("hidden");
-  document.getElementById('student-info-panel').classList.remove('hidden');
+  document.getElementById("studentInfo-panel").classList.remove("hidden");
   updateUI();
 }
 
-// DFA rendering function (unchanged)
+// DFA:
 function renderDFA() {
   if (!history.length) return;
   const old = document.getElementById("dfa-container");
@@ -385,56 +299,70 @@ function renderDFA() {
   const svgWidth = 1000;
   const svgHeight = 280;
   const centerY = svgHeight / 2;
-
   const states = [];
-  history.forEach(step => {
+  history.forEach((step) => {
     if (!states.includes(step.from)) states.push(step.from);
     if (!states.includes(step.to)) states.push(step.to);
   });
-
   const spacing = svgWidth / (states.length + 1);
   const pos = {};
-  states.forEach((s, i) => {
-    pos[s] = { x: spacing * (i + 1), y: centerY };
-  });
+  states.forEach((s, i) => (pos[s] = { x: spacing * (i + 1), y: centerY }));
 
   let nodes = "";
-  states.forEach(state => {
+  states.forEach((state) => {
     let fill = "#607d8b";
     if (state === "S5") fill = "#4CAF50";
     if (state === "S6") fill = "#f44336";
 
     nodes += `
       <g>
-        <circle cx="${pos[state].x}" cy="${pos[state].y}" r="30"
-                fill="${fill}" stroke="#000" stroke-width="2"/>
-        ${state === "S5" ? `<circle cx="${pos[state].x}" cy="${pos[state].y}" r="36" fill="none" stroke="#000" stroke-width="2"/>` : ""}
-        <text x="${pos[state].x}" y="${pos[state].y + 5}"
-              text-anchor="middle" font-size="14"
-              font-weight="bold" fill="#fff">${state}</text>
+        <circle cx="${pos[state].x}" cy="${
+      pos[state].y
+    }" r="30" fill="${fill}" stroke="#000" stroke-width="2"/>
+        <text x="${pos[state].x}" y="${
+      pos[state].y + 5
+    }" text-anchor="middle" font-size="14" font-weight="bold" fill="#fff">${state}</text>
       </g>
     `;
   });
+let arrows = "";
+let labels = "";
 
-  let arrows = "";
-  history.forEach(step => {
-    const from = pos[step.from];
-    const to = pos[step.to];
-    arrows += `
-      <line x1="${from.x + 30}" y1="${from.y}"
-            x2="${to.x - 30}" y2="${to.y}"
-            stroke="#ff5722" stroke-width="3"
-            marker-end="url(#arrowhead)" />
-    `;
-  });
+history.forEach((step) => {
+  const from = pos[step.from];
+  const to = pos[step.to];
 
-  const start = states[0];
-  const startArrow = `
-    <line x1="${pos[start].x - 70}" y1="${pos[start].y}"
-          x2="${pos[start].x - 30}" y2="${pos[start].y}"
-          stroke="#000" stroke-width="3"
+  const midX = (from.x + to.x) / 2;
+  const midY = from.y - 40;
+
+  arrows += `
+    <line x1="${from.x + 30}" y1="${from.y}"
+          x2="${to.x - 30}" y2="${to.y}"
+          stroke="#ff5722" stroke-width="3"
           marker-end="url(#arrowhead)" />
   `;
+
+  labels += `
+  <g>
+    <rect x="${midX - 90}" y="${midY - 14}"
+          width="180" height="22"
+          rx="5" ry="5"
+          fill="#ffffff" stroke="#ccc"/>
+    <text x="${midX}" y="${midY}"
+          text-anchor="middle"
+          font-size="12"
+          font-weight="600"
+          fill="#000">
+      ${step.condition}
+    </text>
+  </g>
+`;
+});
+
+
+  const startArrow = `<line x1="${pos[states[0]].x - 70}" y1="${centerY}" x2="${
+    pos[states[0]].x - 30
+  }" y2="${centerY}" stroke="#000" stroke-width="3" marker-end="url(#arrowhead)" />`;
 
   const svg = `
     <div id="dfa-container" style="margin-top:25px">
@@ -442,24 +370,40 @@ function renderDFA() {
       <svg viewBox="0 0 ${svgWidth} ${svgHeight}" width="100%" height="auto"
            style="background:#fafafa;border-radius:10px;box-shadow:0 8px 20px rgba(0,0,0,0.1)">
         <defs>
-          <marker id="arrowhead" markerWidth="10" markerHeight="10"
-                  refX="6" refY="5" orient="auto">
+          <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto">
             <path d="M0,0 L0,10 L10,5 Z" fill="#000"/>
           </marker>
         </defs>
-        ${startArrow}
-        ${arrows}
-        ${nodes}
+        ${startArrow}${arrows}${labels}${nodes}
+
       </svg>
     </div>
   `;
-
   resultDashboard.insertAdjacentHTML("beforeend", svg);
 }
 
+// Initial setup:
 document.addEventListener("DOMContentLoaded", () => {
   transitionButton.addEventListener("click", handleSubmit);
   admissionForm.addEventListener("submit", handleSubmit);
   resetButton.addEventListener("click", resetSimulation);
   updateUI();
 });
+
+// Student info form:
+const studentInfoForm = document.querySelector('#studentInfo-form');
+studentInfoForm.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const name = document.querySelector('#studentName');
+  const regNum = document.querySelector('#regNum');
+  const program = document.querySelector('#program');
+  Info = {
+    name: name.value,
+    regNum: regNum.value,
+    program: program.value
+  }
+    document.querySelector("#admission-panel").classList.remove("hidden");
+    document.querySelector("#studentInfo-panel").classList.add("hidden");
+    currentState = "S1";
+    updateUI();
+})
