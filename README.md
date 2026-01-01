@@ -176,7 +176,7 @@ This visualization helps in **understanding DFA traversal clearly**.
 1. Clone the repository
 
    ```bash
-   git clone https://github.com/your-username/admission-dfa-system.git
+   git clone https://github.com/MuhammadMuzammil-TheDeveloper/University-Admission-Decision-Machine.git
    ```
 2. Open `index.html` in any modern browser
 3. Enter student information
@@ -206,11 +206,11 @@ This visualization helps in **understanding DFA traversal clearly**.
 
 **Muhammad Muzammil**
 BS Computer Science
+
+**Muhammad Zain**
+BS Computer Science
 Semester Project – Automata Theory
 
+
 ---
-
-## 📄 License
-
-This project is developed **for educational purposes only**.
 
