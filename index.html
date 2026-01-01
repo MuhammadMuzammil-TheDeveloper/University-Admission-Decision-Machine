@@ -29,19 +29,19 @@
         <div id="dfa-visualization">
           <p>
             Current State:
-            <span id="current-state-display" class="state-tag s0">S0</span>
+            <span id="current-state-display" class="state-tag s0">S1</span>
           </p>
         </div>
         <h2>Transition Log</h2>
         <ul id="history-log"></ul>
       </div>
-      <div class="panel student-info-panel" id="student-info-panel">
+      <div class="panel student-info-panel" id="studentInfo-panel">
         <div class="applicant-form">
           <i class="fa-solid fa-user-graduate"></i>
           <h3 class="form-heading">Applicant Information</h3>
         </div>
 
-        <form id="student-info-form" class="student-info-form">
+        <form id="studentInfo-form" class="student-info-form">
           <div class="form-group">
             <label>Student Name</label>
             <input type="text" id="studentName" required />
@@ -49,7 +49,7 @@
 
           <div class="form-group">
             <label>Registration / CNIC</label>
-            <input type="text" id="regNo" required />
+            <input type="text" id="regNum" required />
           </div>
 
           <div class="form-group">
@@ -69,8 +69,8 @@
       </div>
 
       <div class="panel admission-panel hidden" id="admission-panel">
-        <h2 id="stage-title">S0: Form Submitted (Initial State)</h2>
-        <p id="stage-instructions">
+        <h2 id="state-title">S0: Form Submitted (Initial State)</h2>
+        <p id="state-instructions">
           This system simulates the university admission process by dividing it
           into different stages. An application moves to the next stage only
           when the required conditions are met.
@@ -90,3 +90,4 @@
     <script src="script.js"></script>
   </body>
 </html>
+
