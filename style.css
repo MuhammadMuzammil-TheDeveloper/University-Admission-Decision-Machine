@@ -1,6 +1,3 @@
-/* =====================
-   ROOT VARIABLES
-===================== */
 :root {
   --color-university-blue: #0A3D62;
   --color-university-gold: #FFC312;
@@ -12,12 +9,7 @@
   --font-stack: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* =====================
-   GLOBAL RESET
-===================== */
-*,
-*::before,
-*::after {
+* {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -27,9 +19,6 @@ html, body {
   width: 100%;
 }
 
-/* =====================
-   BODY
-===================== */
 body {
   font-family: var(--font-stack);
   background-color: var(--color-bg);
@@ -38,9 +27,6 @@ body {
   color: #2c3e50;
 }
 
-/* =====================
-   HEADER
-===================== */
 header {
   background-color: var(--color-university-blue);
   color: white;
@@ -74,9 +60,6 @@ header {
   font-weight: 700;
 }
 
-/* =====================
-   MAIN CONTAINER
-===================== */
 .container {
   display: flex;
   max-width: 1360px;
@@ -85,9 +68,7 @@ header {
   gap: 20px;
   margin-top: 50px;
 }
-/* =========================
-   STUDENT INFO FORM (PRE-DFA)
-========================= */
+
 .applicant-form {
   display: flex;
   justify-content: center;
@@ -146,7 +127,6 @@ header {
   box-shadow: 0 0 5px rgba(255, 195, 18, 0.4);
 }
 
-/* Start Button */
 .start-btn {
   margin-top: 10px;
   font-size: 1.05em;
@@ -158,9 +138,6 @@ header {
   background-color: #062e49;
 }
 
-/* =========================
-   RESPONSIVE
-========================= */
 @media (max-width: 600px) {
   .student-info-panel {
     margin: 15px;
@@ -180,9 +157,6 @@ header {
   }
 }
 
-/* =====================
-   PANELS
-===================== */
 .hidden {
   display: none !important;
 }
@@ -197,7 +171,6 @@ header {
   margin: 20px auto;
 }
 
-
 .dfa-panel {
   flex: 1;
 }
@@ -206,9 +179,6 @@ header {
   flex: 2;
 }
 
-/* =====================
-   HEADINGS
-===================== */
 h2 {
   color: var(--color-university-blue);
   border-bottom: 2px solid var(--color-university-gold);
@@ -216,9 +186,6 @@ h2 {
   margin-top: 0;
 }
 
-/* =====================
-   STATE TAGS
-===================== */
 .state-tag {
   padding: 5px 10px;
   border-radius: 5px;
@@ -244,9 +211,6 @@ h2 {
   margin-top: 10px;
 }
 
-/* =====================
-   FORM STYLES
-===================== */
 #admission-form {
   width: 100%;
 }
@@ -274,9 +238,6 @@ h2 {
   box-shadow: 0 0 4px rgba(255, 195, 18, 0.5);
 }
 
-/* =====================
-   CHECKBOX ACTIVITIES
-===================== */
 .activity-checkboxes {
   display: flex;
   flex-direction: column;
@@ -291,9 +252,6 @@ h2 {
   font-weight: 500;
 }
 
-/* =====================
-   BUTTONS
-===================== */
 .action-btn,
 #run-test-button {
   background-color: var(--color-university-gold);
@@ -313,9 +271,6 @@ h2 {
   background-color: #f39c12;
 }
 
-/* =====================
-   LOG HISTORY
-===================== */
 #history-log {
   list-style: none;
   padding: 0;
@@ -336,9 +291,6 @@ h2 {
   background-color: #fef5f5;
 }
 
-/* =====================
-   RESULT DASHBOARD
-===================== */
 #result-dashboard {
   padding: 20px;
   border-radius: 8px;
@@ -360,18 +312,12 @@ h2 {
   display: none !important;
 }
 
-/* =====================
-   RESPONSIVE BREAKPOINTS
-===================== */
-
-/* Tablets */
 @media (max-width: 992px) {
   .container {
     flex-direction: column;
   }
 }
 
-/* Phones */
 @media (max-width: 600px) {
   header {
     flex-direction: column;
@@ -396,50 +342,5 @@ h2 {
 
   #history-log li {
     font-size: 0.85em;
-  }
-}
-
-/* for report */
-@media print {
-  body * {
-    visibility: hidden;
-  }
-
-  /* Show only result dashboard */
-  #result-dashboard,
-  #result-dashboard * {
-    visibility: visible;
-  }
-
-  /* Position report at top-left */
-  #result-dashboard {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 20px;
-  }
-
-  /* Remove colors that cause page breaks */
-  body {
-    background: white;
-  }
-
-  /* Remove box shadows & borders */
-  .result-accepted,
-  .result-rejected {
-    box-shadow: none !important;
-    border-width: 2px;
-  }
-
-  /* Remove buttons during print */
-  button {
-    display: none !important;
-  }
-  /* Force single page */
-  @page {
-    size: A4;
-    margin: 15mm;
   }
 }
