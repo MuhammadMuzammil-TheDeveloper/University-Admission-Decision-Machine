@@ -1,4 +1,3 @@
-
 const States = {
   S1: "Documentation Submission & Verification",
   S2: "Academic Evaluation",
@@ -7,21 +6,20 @@ const States = {
   S5: "Accepted (Accept State)",
   S6: "Rejected (Reject State)",
 };
-
 let studentInfo = {};
 let currentState = "S1";
 let history = [];
 let applicantData = {};
 
-const THRESHOLDS = {
-  ACADEMIC_PASS: 60,
-  INTERVIEW_PASS: 50,
-  MAX_SECOND_YEAR: 1100,
-  MAX_ADMISSION_TEST: 100,
-  TOTAL_MAX_SCORE: 1200,
+const thresholds = {
+  academicPass: 60,
+  interviewPass: 50,
+  maxSecondYear: 1100,
+  maxAdmissionTest: 100,
+  totalMaxScore: 1200,
+  maxInterview: 100,
 };
-
-const stateTitle = document.getElementById("stage-title");
+const stateTitle = document.getElementById("state-title");
 const admissionForm = document.getElementById("admission-form");
 const transitionButton = document.getElementById("transition-button");
 const historyLog = document.getElementById("history-log");
@@ -53,16 +51,16 @@ function transition(current, inputs) {
 
       score = Math.round(
         ((marks2ndYear + marksAdmissionTest) /
-          THRESHOLDS.TOTAL_MAX_SCORE) *
+          thresholds.totalMaxScore) *
           100
       );
 
-      if (score >= THRESHOLDS.ACADEMIC_PASS) {
+      if (score >= thresholds.academicPass) {
         nextState = "S3";
         outcome = `Academic Pass (${score}%)`;
-        condition = `Academic score ≥ ${THRESHOLDS.ACADEMIC_PASS}%`;
+        condition = `Academic score ≥ ${thresholds.academicPass}%`;
       } else {
-        condition = `Academic score < ${THRESHOLDS.ACADEMIC_PASS}%`;
+        condition = `Academic score < ${thresholds.academicPass}%`;
       }
       break;
 
@@ -71,7 +69,7 @@ function transition(current, inputs) {
         nextState = "S4";
         outcome = "Extracurricular Requirement Met";
         condition = "At least 1 extracurricular activity";
-        score = 100;
+        // score = 100;
       } else {
         condition = "No extracurricular activities";
       }
@@ -79,27 +77,26 @@ function transition(current, inputs) {
 
     case "S4":
       score = inputs.interviewPercentage;
-      if (score >= THRESHOLDS.INTERVIEW_PASS) {
+      if (score >= thresholds.interviewPass) {
         nextState = "S5";
         outcome = "Accepted";
-        condition = `Interview score ≥ ${THRESHOLDS.INTERVIEW_PASS}%`;
+        condition = `Interview score ≥ ${thresholds.interviewPass}%`;
       } else {
-        condition = `Interview score < ${THRESHOLDS.INTERVIEW_PASS}%`;
+        condition = `Interview score < ${thresholds.interviewPass}%`;
       }
       break;
   }
 
-  return { nextState, outcome, condition, stageScore: score };
+  return { nextState, outcome, condition, stateScore: score };
 }
 
-
-// Render Form for Each Stage: 
+// Render Form for Each State: 
 function renderForm(state) {
   let html = "";
   let buttonText =
     state === "S4"
       ? "Final Evaluation and Decision"
-      : "Submit and Evaluate Stage";
+      : "Submit and Evaluate State";
   transitionButton.textContent = buttonText;
 
   switch (state) {
@@ -109,18 +106,17 @@ function renderForm(state) {
                 I confirm that all submitted documents have been reviewed and verified by the admission office.
               </label>`;
       break;
-
     case "S2":
       html = `
-        <label for="marks2ndYear">2nd Year Marks (Max ${THRESHOLDS.MAX_SECOND_YEAR}):</label>
-        <input type="number" id="marks2ndYear" name="marks2ndYear" min="0" max="${THRESHOLDS.MAX_SECOND_YEAR}" required value="750">
-        <label for="marksAdmissionTest">Admission Test Score (Max ${THRESHOLDS.MAX_ADMISSION_TEST}):</label>
-        <input type="number" id="marksAdmissionTest" name="marksAdmissionTest" min="0" max="${THRESHOLDS.MAX_ADMISSION_TEST}" required value="70">
+        <label for="marks2ndYear">2nd Year Marks (Max ${thresholds.maxSecondYear}):</label>
+        <input type="number" id="marks2ndYear" name="marks2ndYear" min="0" max="${thresholds.maxSecondYear}" required value="750">
+        <label for="marksAdmissionTest">Admission Test Score (Max ${thresholds.maxAdmissionTest}):</label>
+        <input type="number" id="marksAdmissionTest" name="marksAdmissionTest" min="0" max="${thresholds.maxAdmissionTest}" required value="70">
       `;
       break;
-
     case "S3":
       html = `
+        <label>Minimum 1 activity required</label>
         <div class="activity-checkboxes">
           <label><input type="checkbox" name="activity_sports" value="1"> Competitive Sports Participation</label>
           <label><input type="checkbox" name="activity_certificate" value="1"> Advanced Skill Certificate</label>
@@ -133,14 +129,14 @@ function renderForm(state) {
         const formEl = document.getElementById("admission-form");
         const updateCount = () => {
           let count = 0;
-          formEl.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
-            if (cb.checked) count++;
+          formEl.querySelectorAll('input[type="checkbox"]').forEach((checkBox) => {
+            if (checkBox.checked) count++;
           });
           document.getElementById("activityCount").value = count;
         };
         formEl
           .querySelectorAll('input[type="checkbox"]')
-          .forEach((cb) => cb.addEventListener("change", updateCount));
+          .forEach((checkBox) => checkBox.addEventListener("change", updateCount));
       }, 0);
       break;
 
@@ -176,8 +172,6 @@ function updateUI() {
 
 // Log update:
 function updateLog(fromState, toState, outcome, condition, score) {
-  if (fromState === "S0") return;
-
   const listItem = document.createElement("li");
   listItem.classList.add(toState === "S6" ? "log-fail" : "log-pass");
 
@@ -234,8 +228,8 @@ function renderResultDashboard() {
 }
 
 // Form handling:
-function handleSubmit(event) {
-  event.preventDefault();
+function handleSubmit(e) {
+  e.preventDefault();
 
   const inputs = {};
   const formData = new FormData(admissionForm);
@@ -254,7 +248,23 @@ function handleSubmit(event) {
     }
   }
   inputs.activityCount = activityCount;
+  if (currentState === "S2") {
+    if (inputs.marks2ndYear > thresholds.maxSecondYear) {
+      alert(`2nd Year marks cannot exceed ${thresholds.maxSecondYear}.`);
+      return; 
+    }
 
+    if (inputs.marksAdmissionTest > thresholds.maxAdmissionTest) {
+      alert(`Admission test marks cannot exceed ${thresholds.maxAdmissionTest}.`);
+      return; 
+    }
+  }
+  if (currentState === 'S4') {
+    if (inputs.interviewPercentage > thresholds.maxInterview) {
+      alert(`Interview % cannot exceed ${thresholds.maxInterview}.`);
+      return; 
+    }
+  }
   const result = transition(currentState, inputs);
   const previousState = currentState;
   currentState = result.nextState;
@@ -265,7 +275,7 @@ function handleSubmit(event) {
     to: currentState,
     outcome: result.outcome,
     condition: result.condition,
-    stageScore: result.stageScore,
+    stateScore: result.stateScore,
   });
 
   updateLog(
@@ -273,9 +283,10 @@ function handleSubmit(event) {
     currentState,
     result.outcome,
     result.condition,
-    result.stageScore
+    result.stateScore
   );
   updateUI();
+  
 }
 
 // Reset process:
@@ -345,12 +356,12 @@ history.forEach((step) => {
   labels += `
   <g>
     <rect x="${midX - 90}" y="${midY - 14}"
-          width="180" height="22"
+          width="180" height="24"
           rx="5" ry="5"
           fill="#ffffff" stroke="#ccc"/>
     <text x="${midX}" y="${midY}"
           text-anchor="middle"
-          font-size="12"
+          font-size="10"
           font-weight="600"
           fill="#000">
       ${step.condition}
